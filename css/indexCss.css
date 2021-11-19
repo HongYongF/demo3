@@ -33,7 +33,7 @@
     width: 100vw;
     height: 40vh;
     flex-wrap: nowrap;
-    justify-content:center;
+
 }
 
 .museum{
@@ -43,7 +43,6 @@
     width: 100%;
     background-position: center;
     background-size: contain;
-    
 }
 
 .life{

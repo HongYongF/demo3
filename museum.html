@@ -4,28 +4,158 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>戏曲博物馆</title>
-    <link rel="stylesheet" href="./css/museumCss.css">
-
+    <title>museum</title>
 </head>
+<style>
+    body,html{
+        width: 100%;
+        height:100%;
+        margin: 0;
+        padding:0;
+    }
+</style>
 <body>
-    <div class="background moveItem" class="moveItem"></div>
-        <div class="text-box">
-            <img class="text-item moveItem" src="./res/生-文字块.png" style="left: 0px;"/>
-            <img class="text-item moveItem" src="./res/旦-文字块.png" style="left: 500px;"/>
-            <img class="text-item moveItem" src="./res/净-文字块.png" style="left: 1000px;"/>
-            <img class="text-item moveItem" src="./res/丑-文字块.png" style="left: 1500px;"/>
-        </div>
-        <div class="mask-box">
-            <img class="mask-item moveItem" src="./res/生-面具.png" style="left: 0px"/>
-            <img class="mask-item moveItem" src="./res/旦-面具.png" style="left: 500px"/>
-            <img class="mask-item moveItem" src="./res/净-面具.png" style="left: 1000px"/>
-            <img class="mask-item moveItem" src="./res/丑-面具.png" style="left: 2000px"/>
-        </div>
-            
-        <div class="leftBtn" onmousedown="moveItems(1)" onmouseleave="stopMove()"></div>
-        <div class="rightBtn" onmousedown="moveItems(-1)" onmouseleave="stopMove()"></div>
-    
-    <script src="./js/museumController.js" type="text/javascript"></script>
+    <script src="js/pixi.min.js"></script>
+    <script>
+		const WIDTH = document.body.clientWidth;
+		const HEIGHT = document.body.clientHeight;
+        const WHRadio = WIDTH/HEIGHT;
+		var app = new PIXI.Application(WIDTH,HEIGHT);
+        document.body.appendChild(app.view);
+        var bg = new PIXI.Sprite.fromImage("res/背景.jpg");
+		var dirLeft = new PIXI.Sprite.fromImage("res/箭头.png");
+		var dirRight = new PIXI.Sprite.fromImage("res/箭头.png");
+		const dirTexture1 = new PIXI.Texture.fromImage("res/箭头.png");
+		const dirTexture2 = new PIXI.Texture.fromImage("res/箭头_选中.png");
+        app.stage.addChild(bg);
+		bg.width = 4*WIDTH;
+		bg.height = HEIGHT;
+		bg.interactive = true;
+		const maskList = InitMask();
+		const LEFT_MARGIN = -bg.width + WIDTH;
+		const MOVE_SPEED = 7;
+		app.stage.addChild(dirLeft);
+		app.stage.addChild(dirRight);
+		dirLeft.width = 88;
+		dirLeft.height = 93;
+		dirRight.width = 88;
+		dirRight.height = 93;
+		dirLeft.anchor.set(0.5,0.5);
+		dirLeft.x = 80;
+		dirLeft.y = HEIGHT/2;
+		dirLeft.rotation = Math.PI/2;
+		dirRight.anchor.set(0.5,0.5);
+		dirRight.x = WIDTH - 80;
+		dirRight.y = HEIGHT/2;
+		dirRight.rotation = Math.PI*3/2;
+		dirLeft.interactive = true;
+		dirRight.interactive = true;
+		dirLeft.isMove = false;
+		dirRight.isMove = false;
+		dirLeft.on("mousedown",function(){
+			dirLeft.isMove = true;
+		})
+		dirLeft.on("mouseup",function(){
+			dirLeft.isMove = false;
+		})
+		dirLeft.on("mouseover",function(){
+			dirLeft.texture = dirTexture2;
+		})
+		dirRight.on("mousedown",function(){
+			dirRight.isMove = true;
+		})
+		dirRight.on("mouseup",function(){
+			dirRight.isMove = false;
+		})
+		dirRight.on("mouseover",function(){
+			dirRight.texture = dirTexture2;
+		})
+		bg.on("mousedown",function(){
+			this.isChoose = true;
+		});
+		bg.on("mouseup",function(){
+			this.isChoose = false;
+		});
+		bg.on("mousemove",move);
+		bg.on("mouseover",function(){
+			dirLeft.isMove = false;
+			dirRight.isMove = false;
+			dirLeft.texture = dirTexture1;
+			dirRight.texture = dirTexture1;
+		})
+		app.ticker.add(dirMove);
+		function dirMove(){
+			if(dirLeft.isMove){
+				var moveX = MOVE_SPEED;
+				bg.x += moveX;
+				moveMaskList(maskList,moveX * 1.5)
+				if(bg.x > 0)
+					bg.x = 0;
+				if(bg.x < LEFT_MARGIN)
+					bg.x = LEFT_MARGIN;
+			}
+			if(dirRight.isMove){
+				var moveX = -MOVE_SPEED;
+				bg.x += moveX;
+				moveMaskList(maskList,moveX * 1.5)
+				if(bg.x > 0)
+					bg.x = 0;
+				if(bg.x < LEFT_MARGIN)
+					bg.x = LEFT_MARGIN;
+			}
+		}
+		
+		function move(e){
+			if(this.isChoose){
+				bg.x += (e.data.global.x - bg.lastPos);
+				moveMaskList(maskList,(e.data.global.x - bg.lastPos) * 1.5)
+			}
+			if(bg.x > 0)
+				bg.x = 0;
+			if(bg.x < LEFT_MARGIN)
+				bg.x = LEFT_MARGIN;
+			bg.lastPos = e.data.global.x;
+		}
+		
+		function InitMask(name,x){
+			var list = [];
+			var name = "生旦净丑";
+			var textList = [{w:1.1*WIDTH,whr:741/2401,x:0.1*WIDTH,y:200},
+							{w:1.1*WIDTH,whr:777/2249,x:1.3*WIDTH,y:50},
+							{w:1.1*WIDTH,whr:848/2304,x:100+2.5*WIDTH,y:60},
+							{w:1.1*WIDTH,whr:708/2599,x:100+3.9*WIDTH,y:70}]
+			var whList = [{y:0.4*HEIGHT,w:0.45*WIDTH,whr:190/175,x:0.6*WIDTH},
+						  {y:0.65*HEIGHT,w:0.4*WIDTH,whr:140/155,x:1.7*WIDTH},
+						  {y:0.6*HEIGHT,w:0.3*WIDTH,whr:156/112,x:3.2*WIDTH},
+						  {y:0.6*HEIGHT,w:0.4*WIDTH,whr:141/162,x:4.7*WIDTH}]
+			for(var i = 0;i<4;i++){
+				var text = new PIXI.Sprite.fromImage(`res/${name[i]}-文字块.png`);
+				var mask = new PIXI.Sprite.fromImage(`res/${name[i]}-面具.png`);
+				app.stage.addChild(text);
+				app.stage.addChild(mask);
+				text.width = textList[i].w/1.5;
+				text.height = textList[i].whr*textList[i].w;
+				text.x = textList[i].x;
+				text.y = textList[i].y;
+				mask.anchor.set(0.5,0.5);
+				mask.y = whList[i].y;
+				mask.x = whList[i].x;
+				mask.width = whList[i].w;
+				mask.height = whList[i].whr*whList[i].w;
+				mask.text = text;
+				list.push(mask);
+			}
+			list.forEach(mask=>app.stage.addChild(mask));
+			return list;
+		}
+		
+		function moveMaskList(list,x){
+			if(bg.x > 0)
+				return ;
+			if(bg.x < LEFT_MARGIN)
+				return ;
+			list.forEach(mask=>{mask.x+=x;mask.text.x+=x*0.8});
+		}
+    </script>
 </body>
 </html>
